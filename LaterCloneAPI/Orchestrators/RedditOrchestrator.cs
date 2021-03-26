@@ -52,7 +52,7 @@ namespace LaterCloneAPI.Orchestrators
         public async Task<SubredditQueryResponse> GetTopPosts(string subreddit)
         {
             var request = new HttpRequestMessage();
-            var requestUri = new Uri($"r/{subreddit}/top.json", UriKind.Relative);
+            var requestUri = new Uri($"r/{subreddit}/top.json?t=week", UriKind.Relative);
             request.RequestUri = requestUri;
             request.Method = HttpMethod.Get;
             var response = await _httpClient.SendAsync(request);
