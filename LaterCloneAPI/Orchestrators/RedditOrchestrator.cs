@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using LaterCloneAPI.Models;
 using System.Text.Json;
+using System.Linq;
 
 namespace LaterCloneAPI.Orchestrators
 {
@@ -49,7 +50,7 @@ namespace LaterCloneAPI.Orchestrators
             return await secondResponse.Content.ReadAsStringAsync();
         }
 
-        public async Task<SubredditQueryResponse> GetTopPosts(string subreddit)
+        public async Task<IEnumerable<SubredditResponse>> GetTopPosts(string subreddit)
         {
             var request = new HttpRequestMessage();
             var requestUri = new Uri($"r/{subreddit}/top.json?t=week", UriKind.Relative);
@@ -58,7 +59,21 @@ namespace LaterCloneAPI.Orchestrators
             var response = await _httpClient.SendAsync(request);
             var payload = await response.Content.ReadAsStringAsync();
             var parsedResponse = JsonSerializer.Deserialize<SubredditQueryResponse>(payload);
-            return parsedResponse;
+            return BuildResponse(parsedResponse);
+        }
+
+        private IEnumerable<SubredditResponse> BuildResponse(SubredditQueryResponse response)
+        {
+            var subredditResponses = new List<SubredditResponse>();
+            foreach(var post in response.Data.Children)
+            {
+                subredditResponses.Add(new SubredditResponse { 
+                    CreatedDateUTC = post.Data.CreatedUtc,
+                    Title = post.Data.Title,
+                    Upvotes = post.Data.Ups
+                });
+            }
+            return subredditResponses;
         }
     }
 }
