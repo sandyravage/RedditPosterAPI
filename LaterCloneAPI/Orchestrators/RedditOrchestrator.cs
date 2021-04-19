@@ -50,21 +50,37 @@ namespace LaterCloneAPI.Orchestrators
             return await secondResponse.Content.ReadAsStringAsync();
         }
 
-        public async Task<IEnumerable<SubredditResponse>> GetTopPosts(string subreddit)
-        {
-            var request = new HttpRequestMessage();
-            var requestUri = new Uri($"r/{subreddit}/top.json?t=week", UriKind.Relative);
-            request.RequestUri = requestUri;
-            request.Method = HttpMethod.Get;
-            var response = await _httpClient.SendAsync(request);
-            var payload = await response.Content.ReadAsStringAsync();
-            var parsedResponse = JsonSerializer.Deserialize<SubredditQueryResponse>(payload);
-            return BuildResponse(parsedResponse);
-        }
-
-        private IEnumerable<SubredditResponse> BuildResponse(SubredditQueryResponse response)
+        public async Task<IEnumerable<SubredditResponse>> GetTopPosts(string subreddit, string t)
         {
             var subredditResponses = new List<SubredditResponse>();
+            string after = "";
+            var period = !string.IsNullOrWhiteSpace(t) ? t : "week";
+            for (var count = 0; count <= 1000; count += 100)
+            {
+                var request = new HttpRequestMessage();
+                var uri = count == 0 ? $"r/{subreddit}/top.json?t={period}&limit=100" : $"r/{subreddit}/top.json?t={period}&limit=100&count={count}&after={after}";
+                var requestUri = new Uri(uri, UriKind.Relative);
+                request.RequestUri = requestUri;
+                request.Method = HttpMethod.Get;
+                var response = await _httpClient.SendAsync(request);
+                var payload = await response.Content.ReadAsStringAsync();
+                var parsedResponse = JsonSerializer.Deserialize<SubredditQueryResponse>(payload);
+                BuildResponse(subredditResponses, parsedResponse);
+                if (!string.IsNullOrWhiteSpace(parsedResponse.Data.After))
+                {
+                    after = parsedResponse.Data.After;
+                }
+                else
+                {
+                    break;
+                }                
+            }
+
+            return subredditResponses;
+        }
+
+        private void BuildResponse(List<SubredditResponse> subredditResponses, SubredditQueryResponse response)
+        {
             foreach(var post in response.Data.Children)
             {
                 subredditResponses.Add(new SubredditResponse { 
@@ -73,7 +89,6 @@ namespace LaterCloneAPI.Orchestrators
                     Upvotes = post.Data.Ups
                 });
             }
-            return subredditResponses;
         }
     }
 }

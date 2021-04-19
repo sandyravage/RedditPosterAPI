@@ -15,13 +15,13 @@ namespace LaterCloneAPI.Controllers
         }
 
         [HttpGet("getposts/{subreddit}")]
-        public async Task<IActionResult> GetPosts(string subreddit)
+        public async Task<IActionResult> GetPosts(string subreddit, [FromQuery] string t)
         {
             if(string.IsNullOrWhiteSpace(subreddit))
             {
                 return BadRequest("Must provide subreddit");
             }
-            var response = await _redditOrchestrator.GetTopPosts(subreddit);
+            var response = await _redditOrchestrator.GetTopPosts(subreddit, t);
             return Ok(response);
         }        
     }
