@@ -81,7 +81,7 @@ namespace LaterCloneAPI.Orchestrators
 
         private void BuildResponse(List<SubredditResponse> subredditResponses, SubredditQueryResponse response)
         {
-            foreach(var post in response.Data.Children)
+            foreach(var post in response.Data?.Children)
             {
                 subredditResponses.Add(new SubredditResponse { 
                     CreatedDateUTC = post.Data.CreatedUtc,
